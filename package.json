@@ -1,0 +1,12 @@
+{
+  "name": "find-first-member-event",
+  "version": "1.0.0",
+  "description": "Find the first m.room.member state event in a room for a user",
+  "main": "index.js",
+  "author": "Twilight Sparkle",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.26.0",
+    "prompt-sync": "^4.2.0"
+  }
+}
