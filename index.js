@@ -21,7 +21,14 @@ const matrix = axios.create({
 async function main() {
     let latestEvent;
 
-    let response = await matrix.get('/state');
+    let response;
+    try {
+        response = await matrix.get('/state');
+    } catch (err) {
+        console.log(err.response?.data?.error ?? 'Unknown error occurred');
+        process.exit(1);
+    }
+
     const state = response.data;
     for (const stateEvent of state) {
         if (stateEvent.type === 'm.room.member' && stateEvent.state_key === mxid) {
@@ -34,7 +41,7 @@ async function main() {
         latestEvent = response.data;
     }
 
-    console.log(latestEvent);
+    console.log(latestEvent ?? `No m.room.member event found for user ${mxid}`);
 }
 
 main().catch((err) => console.log(err));
