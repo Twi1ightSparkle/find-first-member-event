@@ -11,16 +11,31 @@ if (!mxid) {
     mxid = prompt('Matrix ID: ');
 }
 
-// Axios config
-const headers = { Authorization: `Bearer ${token}` };
-const matrix = axios.create({
-    baseURL: `https://${server}/_matrix/client/v3/rooms/${roomId}`,
-    headers,
-});
-
 async function main() {
-    let latestEvent;
+    // Resolve alias if this is provided instead of Room ID
+    if (roomId.startsWith('#')) {
+        const resolveAlias = axios.create({
+            baseURL: `https://${server}/_matrix/client/r0/directory/room/${roomId.replace('#', '%23')}`,
+        });
 
+        let response;
+        try {
+            response = await resolveAlias.get();
+        } catch (err) {
+            console.log(err.response?.data?.error ?? `Unknown error occurred resolving ${roomId}`);
+            process.exit(1);
+        }
+        roomId = response.data.room_id;
+    }
+
+    // Axios config
+    const headers = { Authorization: `Bearer ${token}` };
+    const matrix = axios.create({
+        baseURL: `https://${server}/_matrix/client/v3/rooms/${roomId}`,
+        headers,
+    });
+
+    // Fetch all state from the room
     let response;
     try {
         response = await matrix.get('/state');
@@ -29,19 +44,23 @@ async function main() {
         process.exit(1);
     }
 
+    // Find the latest m.room.member state event for the specified user
+    let latestEvent;
     const state = response.data;
     for (const stateEvent of state) {
         if (stateEvent.type === 'm.room.member' && stateEvent.state_key === mxid) {
             latestEvent = stateEvent;
+            break;
         }
     }
 
+    // Follow chain until the first m.room.member event for user is reached
     while (latestEvent?.replaces_state) {
         response = await matrix.get(`/event/${latestEvent.replaces_state}`);
         latestEvent = response.data;
     }
 
-    console.log(latestEvent ?? `No m.room.member event found for user ${mxid}`);
+    console.log(latestEvent ?? `No m.room.member event found in room ${roomId} for user ${mxid}`);
 }
 
 main().catch((err) => console.log(err));

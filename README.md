@@ -4,7 +4,11 @@ Follow the state chain for `m.room.member` events for a user in a room to find w
 originally invited them.
 
 Copy `config.example.json` to `config.json`, set server URL (where the client-server API is exposed)
-and your access token. Optionally also set the room and user ID.
+and your access token. Optionally also set the room and user ID. If not set, the script will ask you.
+
+`roomId` also accepts a room alias.
+
+Only tested with Node 16
 
 ```bash
 node index.js
